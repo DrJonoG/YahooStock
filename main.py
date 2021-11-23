@@ -18,8 +18,11 @@ import sys
 import pandas as pd
 import argparse
 import yahoo
+import datetime
+import time
+from helpers import PrintProgressBar
 
-def main(destinationPath, symbolPath):
+def download(destinationPath, symbolPath):
     # Select first column as symbiol name
     symbolList = pd.read_csv(symbolPath).iloc[:, 0]
 
@@ -28,10 +31,12 @@ def main(destinationPath, symbolPath):
         if not os.path.exists(destinationPath):
             os.makedirs(destinationPath)
 
+    start = time.time()
     # Iterate through each of the tickers and download data
     for index, sym in symbolList.items():
+        PrintProgressBar(index+1, len(symbolList), prefix = '==> Progress: ' + str(sym).ljust(10), suffix = 'Complete. Runtime: ' + str(datetime.timedelta(seconds = (time.time() - start))))
         symDF = yahoo.Download(symbol=sym, dataRange='60d', dataInterval='5m')
-
+        symDF.to_csv(f'{destinationPath}/{sym}.csv')
 
 if __name__ == '__main__':
     # Parse arguments
@@ -40,4 +45,4 @@ if __name__ == '__main__':
     parser.add_argument('-s', required=True, help='Path to symbol list (csv)')
     args = parser.parse_args()
     # Call
-    main(args.d, args.s)
+    download(args.d, args.s)
